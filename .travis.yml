@@ -8,15 +8,17 @@ php:
   - '7.4'
 
 before_script:
+  - docker volume create --name=postgres-dev
+  - docker-compose up -d
+  - docker ps -a
+  - docker logs postgres-dev
+  - docker exec -ti postgres-dev chmod a+x /docker-entrypoint-initdb.d/*.sh
+  - docker exec -ti postgres-dev /docker-entrypoint-initdb.d/init-for-test.sh
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
   - chmod +x ./cc-test-reporter
   - ./cc-test-reporter before-build
   - travis_retry composer self-update
   - travis_retry composer install --no-interaction --prefer-source --dev
-  - docker volume create --name=postgres-dev
-  - docker-compose up -d
-  - docker exec -ti postgres-dev chmod a+x /docker-entrypoint-initdb.d/*.sh
-  - docker exec -ti postgres-dev /docker-entrypoint-initdb.d/init-for-test.sh
 
 script:
   - composer test
