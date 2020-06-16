@@ -20,9 +20,11 @@ class DbManager
 
     public function isConnect(): bool
     {
+        // @codeCoverageIgnoreStart
         if (!is_resource($this->connection)) {
             return false;
         }
+        // @codeCoverageIgnoreEnd
 
         return pg_connection_status($this->connection) === PGSQL_CONNECTION_OK;
     }

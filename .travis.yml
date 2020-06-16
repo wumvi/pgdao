@@ -13,6 +13,7 @@ before_script:
   - ./cc-test-reporter before-build
   - travis_retry composer self-update
   - travis_retry composer install --no-interaction --prefer-source --dev
+  - docker volume create --name=postgres-dev
   - docker-compose up -d
   - docker exec -ti postgres-dev chmod a+x /docker-entrypoint-initdb.d/*.sh
   - docker exec -ti postgres-dev /docker-entrypoint-initdb.d/init-for-test.sh
