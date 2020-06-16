@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  web:
+    image: library/postgres:12.3
+    container_name: postgres-dev
+    hostname: postgres-dev
+    ports:
+      - "5432:5432"
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres-dev:/var/lib/postgresql/data
+      - ./dev/:/docker-entrypoint-initdb.d/
+volumes:
+  postgres-dev:
+    external: true

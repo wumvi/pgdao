@@ -1,0 +1,27 @@
+env:
+  global:
+    - CC_TEST_REPORTER_ID=bacb2c53f8557cf51c4189b82bee0f96844bcb231e88c920cfb17cce9e53206d
+    - GIT_COMMITTED_AT=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then git log -1 --pretty=format:%ct; else git log -1 --skip 1 --pretty=format:%ct; fi)
+
+language: php
+php:
+  - '7.4'
+
+before_script:
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+  - ./cc-test-reporter before-build
+  - travis_retry composer self-update
+  - travis_retry composer install --no-interaction --prefer-source --dev
+  - docker-compose up -d
+  - docker exec -ti postgres-dev chmod a+x /docker-entrypoint-initdb.d/*.sh
+  - docker exec -ti postgres-dev /docker-entrypoint-initdb.d/init-for-test.sh
+
+script:
+  - composer test
+
+after_script:
+  - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT; fi
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
