@@ -8,6 +8,7 @@ php:
   - '7.4'
 
 before_script:
+  - ls -la
   - docker volume create --name=postgres-dev
   - docker-compose up -d
   - docker ps -a
