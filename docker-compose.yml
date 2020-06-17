@@ -10,8 +10,4 @@ services:
       - PGDATA=/var/lib/postgresql/data/pgdata
       - POSTGRES_HOST_AUTH_METHOD=trust
     volumes:
-      - postgres-dev:/var/lib/postgresql/data
       - ./dev/:/docker-entrypoint-initdb.d/
-volumes:
-  postgres-dev:
-    external: true

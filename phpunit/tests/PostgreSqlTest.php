@@ -54,11 +54,11 @@ class PostgreSqlTest extends TestCase
         $pgFetch = new PgFetch($db);
 
         $act = $pgFetch->cursorFetchAll('get_data_by_cursor(:book_id)', ['book_id' => 2]);
-        $exp = [['id' => '1', 'name' => 'book-1'], ['id' => '2', 'name' => 'book-2']];
-        $this->assertEquals($exp, $act, 'Party cursor');
+        $exp = [['id' => '3', 'name' => 'book-3'], ['id' => '4', 'name' => 'book-4']];
+        $this->assertEquals($exp, $act, 'Part cursor');
 
         $act = $pgFetch->cursorFetchAll('get_data_by_cursor(2)');
-        $exp = [['id' => '1', 'name' => 'book-1'], ['id' => '2', 'name' => 'book-2']];
+        $exp = [['id' => '3', 'name' => 'book-3'], ['id' => '4', 'name' => 'book-4']];
         $this->assertEquals($exp, $act, 'Simple cursor');
 
         $db->disconnect();
@@ -92,7 +92,7 @@ class PostgreSqlTest extends TestCase
         $act = $pgFetch->tableFetchAll('get_data_by_table(:book_id)', ['book_id' => -1]);
         $this->assertEquals([], $act, 'Func table fetch first');
 
-        $act = $pgFetch->cursorFetchAll('get_data_by_cursor(:book_id)', ['book_id' => -1]);
+        $act = $pgFetch->cursorFetchAll('get_data_by_cursor(:book_id)', ['book_id' => 10000]);
         $this->assertEquals([], $act, 'Func cursor fetch all');
 
         $db->disconnect();
@@ -183,8 +183,8 @@ class PostgreSqlTest extends TestCase
 
         $pgFetch->call('call_void_func()');
 
-        $act = $pgFetch->tableFetchFirst('get_data_by_table_array(ARRAY[100])');
-        $exp = ['id' => '100', 'name' => 'book-100'];
+        $act = $pgFetch->tableFetchFirst('get_data_by_table(1000)');
+        $exp = ['id' => '1000', 'name' => 'book-1000'];
         $this->assertEquals($exp, $act, 'Check call function');
 
         $db->disconnect();

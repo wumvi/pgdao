@@ -10,10 +10,10 @@ php:
 before_script:
   - docker volume create --name=postgres-dev
   - docker-compose up -d
-  - docker logs postgres-dev
-  - sleep 10
-  - docker exec -ti postgres-dev chmod a+x /docker-entrypoint-initdb.d/init-for-test.sh
-  - docker exec -ti postgres-dev /docker-entrypoint-initdb.d/init-for-test.sh
+  # - docker logs postgres-dev
+  # - sleep 10
+  # - docker exec -ti postgres-dev chmod a+x /docker-entrypoint-initdb.d/init-for-test.sh
+  # - docker exec -ti postgres-dev /docker-entrypoint-initdb.d/init-for-test.sh
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
   - chmod +x ./cc-test-reporter
   - ./cc-test-reporter before-build

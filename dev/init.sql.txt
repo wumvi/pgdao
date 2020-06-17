@@ -1,4 +1,7 @@
-create table books
+
+
+
+create table public.books
 (
 	id integer,
 	name varchar(20)
@@ -30,7 +33,7 @@ create or replace function get_data_by_cursor_name(refcursor, p_book_id int) ret
     language plpgsql as
 $$
 BEGIN
-    OPEN $1 FOR select * from books b where b.id = p_book_id;
+    OPEN $1 FOR select * from books b where b.id = p_book_id limit 2;
     RETURN $1;
 END;
 $$;
@@ -41,21 +44,13 @@ $$
     select book_id + 1
 $$ LANGUAGE SQL;
 
-create function get_data_by_table(p_book_id integer) returns SETOF books
-    language plpgsql as
-$$
-BEGIN
-    RETURN QUERY select * from books b where b.id = p_book_id;
-END;
-$$;
-
 create function get_data_by_cursor(p_book_id int) returns refcursor
     language plpgsql as
 $$
 DECLARE
     _result CONSTANT REFCURSOR := '_result';
 BEGIN
-    OPEN _result FOR select * from books b where b.id > p_book_id;
+    OPEN _result FOR select * from books b where b.id > p_book_id order by id;
     RETURN _result;
 END;
 $$;
@@ -73,13 +68,13 @@ CREATE OR REPLACE FUNCTION call_void_func()
     RETURNS void AS
 $$
 BEGIN
-    update books
-    set name = 'book-test'
-    where id = 1000;
+    insert into books (id, name)
+    values (1000, 'book-1000');
 END;
 $$ LANGUAGE plpgsql;
 
 CREATE TYPE custom_type AS (f1 int, f2 text);
+
 create or replace function test_types_func(
     refcursor,
     p_data date,
@@ -96,5 +91,5 @@ BEGIN
 END;
 $$ language plpgsql;
 
-
+commit;
 

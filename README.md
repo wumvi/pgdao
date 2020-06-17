@@ -353,3 +353,9 @@ BEGIN
 END;
 $$ language plpgsql;
 ```
+
+##### Useful command
+
+```bash
+docker-compose rm
+```
