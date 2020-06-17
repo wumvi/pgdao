@@ -7,7 +7,7 @@ use \Wumvi\PgDao\PgFetch;
 
 class PostgreSqlTest extends TestCase
 {
-    private const URL = "host=localhost port=5432 dbname=docker user=docker password=pwd options='--client_encoding=UTF8' connect_timeout=1";
+    private const URL = "host=127.0.0.1 port=8885 dbname=docker user=docker password=pwd options='--client_encoding=UTF8' connect_timeout=1";
 
     public function testConnect(): void
     {
