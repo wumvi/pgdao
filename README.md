@@ -3,8 +3,8 @@
 [![GitHub issues](https://img.shields.io/github/issues/wumvi/pgdao.svg?style=flat-square)](https://github.com/wumvi/pgdao/issues)
 [![Build status](https://travis-ci.org/wumvi/pgdao.svg?branch=master)](https://travis-ci.org/wumvi/pgdao)
 [![codecov](https://codecov.io/gh/wumvi/pgdao/branch/master/graph/badge.svg)](https://codecov.io/gh/wumvi/pgdao)
-[![Maintainability](https://api.codeclimate.com/v1/badges/943689de2ecb8ae407ac/maintainability)](https://codeclimate.com/github/wumvi/pgdao/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/943689de2ecb8ae407ac/test_coverage)](https://codeclimate.com/github/wumvi/pgdao/test_coverage)
+[![Maintainability](https://api.codeclimate.com/v1/badges/9ab02d0ec5b2f0fdf68b/maintainability)](https://codeclimate.com/github/wumvi/pgdao/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/9ab02d0ec5b2f0fdf68b/test_coverage)](https://codeclimate.com/github/wumvi/pgdao/test_coverage)
 
 
 docker volume create postgres-dev
