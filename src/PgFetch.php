@@ -84,7 +84,7 @@ class PgFetch
         $vars = self::prepareVars($vars);
         $result = @pg_query_params($connection, $sql, $vars);
         if ($result === false) {
-            throw new DbException('Error to exec ' . $fn);
+            throw new DbException('error-to-exec-' . $fn);
         }
 
         return $result;
@@ -103,7 +103,7 @@ class PgFetch
         $sql = 'SELECT ' . $fn . '; FETCH ALL FROM _result';
         $result = @pg_query($connection, $sql);
         if ($result === false) {
-            throw new DbException('Error to fetch from ' . $fn);
+            throw new DbException('error-to-fetch-from-' . $fn);
         }
 
         return pg_fetch_all($result) ?: [];
@@ -167,7 +167,7 @@ class PgFetch
         $result = @pg_query($connection, 'BEGIN');
         // @codeCoverageIgnoreStart
         if ($result === false) {
-            throw new DbException('Error to start transaction in ' . $fn);
+            throw new DbException('error-to-start-transaction-in-' . $fn);
         }
         // @codeCoverageIgnoreEnd
         $sql = 'SELECT ' . self::replaceParams($fn, $vars);
@@ -178,27 +178,27 @@ class PgFetch
             $result = @pg_query($connection, 'FETCH ALL FROM _result');
             // @codeCoverageIgnoreStart
             if ($result === false) {
-                throw new DbException('Error to fetch in ' . $fn);
+                throw new DbException('error-to-fetch-in-' . $fn);
             }
             // @codeCoverageIgnoreEnd
             $data = pg_fetch_all($result) ?: [];
             $result = @pg_query('CLOSE _result');
             if ($result === false) {
-                throw new DbException('Error to close cursor in ' . $fn);
+                throw new DbException('error-to-close-cursor-in-' . $fn);
             }
         } else {
             foreach ($cursors as $cursorName) {
                 $result = @pg_query($connection, 'FETCH ALL FROM ' . $cursorName);
                 // @codeCoverageIgnoreStart
                 if ($result === false) {
-                    throw new DbException('Error to fetch cursor ' . $cursorName . ' in ' . $fn);
+                    throw new DbException('error-to-fetch-cursor-' . $cursorName . '-in-' . $fn);
                 }
                 // @codeCoverageIgnoreEnd
                 $data[$cursorName] = pg_fetch_all($result) ?: [];
                 $result = @pg_query('CLOSE ' . $cursorName);
                 // @codeCoverageIgnoreStart
                 if ($result === false) {
-                    throw new DbException('Error to close cursor ' . $cursorName . ' in ' . $fn);
+                    throw new DbException('error-to-close-cursor-' . $cursorName . '-in-' . $fn);
                 }
                 // @codeCoverageIgnoreEnd
             }
@@ -206,7 +206,7 @@ class PgFetch
         // @codeCoverageIgnoreStart
         $result = @pg_query($connection, 'END');
         if ($result === false) {
-            throw new DbException('Error to end transaction in ' . $fn);
+            throw new DbException('error-to-end-transaction-in-' . $fn);
         }
         // @codeCoverageIgnoreEnd
 

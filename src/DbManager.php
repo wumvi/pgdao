@@ -49,7 +49,7 @@ class DbManager
 
         $this->connection = $this->isPersistent ? @pg_pconnect($this->url) : @pg_connect($this->url);
         if ($this->connection === false) {
-            throw new DbException('Error to fetch');
+            throw new DbException('error-to-fetch');
         }
 
         return $this->connection;
