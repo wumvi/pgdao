@@ -9,10 +9,12 @@ class PgFetch
     public const UNLIMIT = -1;
 
     private DbManager $dbManager;
+    private bool $isDebug;
 
-    public function __construct(DbManager $dbManager)
+    public function __construct(DbManager $dbManager, $isDebug = false)
     {
         $this->dbManager = $dbManager;
+        $this->isDebug = $isDebug;
     }
 
     /**
@@ -79,12 +81,13 @@ class PgFetch
      *
      * @throws DbException
      */
-    public static function queryParams($connection, string $fn, string $sql, array $vars)
+    public static function queryParams($connection, string $fn, string $sql, array $vars, bool $isDebug = false)
     {
-        $vars = self::prepareVars($vars);
-        $result = @pg_query_params($connection, $sql, $vars);
+        $varsSorted = self::prepareVars($vars);
+        $result = @pg_query_params($connection, $sql, $varsSorted);
         if ($result === false) {
-            throw new DbException('error-to-exec-' . $fn);
+            self::triggerError($connection, $sql, $vars, $isDebug);
+            throw new DbException('error-to-sql-' . $fn);
         }
 
         return $result;
@@ -92,17 +95,38 @@ class PgFetch
 
     /**
      * @param resource $connection
+     * @param string $sql
+     * @param array<mixed> $vars
+     * @param bool $isDebug
+     */
+    public static function triggerError($connection, string $sql, array $vars, bool $isDebug)
+    {
+        if ($isDebug) {
+            $msg = sprintf(
+                "Msg: %s\nSql: %s\nVars: %s",
+                pg_last_error($connection),
+                $sql,
+                var_export($vars, true)
+            );
+            trigger_error($msg);
+        }
+    }
+
+    /**
+     * @param resource $connection
      * @param string $fn
+     * @param bool $isDebug
      *
      * @return array<mixed>
      *
      * @throws DbException
      */
-    public static function simpleCursorFetch($connection, string $fn): array
+    public static function simpleCursorFetch($connection, string $fn, bool $isDebug): array
     {
         $sql = 'SELECT ' . $fn . '; FETCH ALL FROM _result';
         $result = @pg_query($connection, $sql);
         if ($result === false) {
+            self::triggerError($connection, $sql, [], $isDebug);
             throw new DbException('error-to-fetch-from-' . $fn);
         }
 
@@ -153,6 +177,7 @@ class PgFetch
      * @param string $fn
      * @param array<mixed> $vars
      * @param array<string> $cursors
+     * @param bool $isDebug
      *
      * @return array<mixed>
      *
@@ -162,50 +187,64 @@ class PgFetch
         $connection,
         string $fn,
         array $vars = [],
-        array $cursors = []
+        array $cursors = [],
+        bool $isDebug
     ): array {
-        $result = @pg_query($connection, 'BEGIN');
+        $sql = 'BEGIN';
+        $result = @pg_query($connection, $sql);
         // @codeCoverageIgnoreStart
         if ($result === false) {
+            self::triggerError($connection, $sql, [], $isDebug);
             throw new DbException('error-to-start-transaction-in-' . $fn);
         }
         // @codeCoverageIgnoreEnd
+
         $sql = 'SELECT ' . self::replaceParams($fn, $vars);
-        self::queryParams($connection, $fn, $sql, $vars);
+        self::queryParams($connection, $fn, $sql, $vars, $isDebug);
 
         $data = [];
         if (empty($cursors)) {
-            $result = @pg_query($connection, 'FETCH ALL FROM _result');
+            $sql = 'FETCH ALL FROM _result';
+            $result = @pg_query($connection, $sql);
             // @codeCoverageIgnoreStart
             if ($result === false) {
+                self::triggerError($connection, $sql, [], $isDebug);
                 throw new DbException('error-to-fetch-in-' . $fn);
             }
             // @codeCoverageIgnoreEnd
             $data = pg_fetch_all($result) ?: [];
-            $result = @pg_query('CLOSE _result');
+            $sql = 'CLOSE _result';
+            $result = @pg_query($sql);
             if ($result === false) {
+                self::triggerError($connection, $sql, [], $isDebug);
                 throw new DbException('error-to-close-cursor-in-' . $fn);
             }
         } else {
             foreach ($cursors as $cursorName) {
-                $result = @pg_query($connection, 'FETCH ALL FROM ' . $cursorName);
+                $sql = 'FETCH ALL FROM ' . $cursorName;
+                $result = @pg_query($connection, $sql);
                 // @codeCoverageIgnoreStart
                 if ($result === false) {
+                    self::triggerError($connection, $sql, [], $isDebug);
                     throw new DbException('error-to-fetch-cursor-' . $cursorName . '-in-' . $fn);
                 }
                 // @codeCoverageIgnoreEnd
                 $data[$cursorName] = pg_fetch_all($result) ?: [];
-                $result = @pg_query('CLOSE ' . $cursorName);
+                $sql = 'CLOSE ' . $cursorName;
+                $result = @pg_query($sql);
                 // @codeCoverageIgnoreStart
                 if ($result === false) {
+                    self::triggerError($connection, $sql, [], $isDebug);
                     throw new DbException('error-to-close-cursor-' . $cursorName . '-in-' . $fn);
                 }
                 // @codeCoverageIgnoreEnd
             }
         }
         // @codeCoverageIgnoreStart
-        $result = @pg_query($connection, 'END');
+        $sql = 'END';
+        $result = @pg_query($connection, $sql);
         if ($result === false) {
+            self::triggerError($connection, $sql, [], $isDebug);
             throw new DbException('error-to-end-transaction-in-' . $fn);
         }
         // @codeCoverageIgnoreEnd
@@ -217,16 +256,17 @@ class PgFetch
      * @param resource $connection
      * @param string $rawSql
      * @param array<mixed> $vars
+     * @param bool $isDebug
      *
      * @return resource
      *
      * @throws DbException
      */
-    public static function prepareRawSql($connection, string $rawSql, array $vars)
+    public static function prepareRawSql($connection, string $rawSql, array $vars, bool $isDebug)
     {
         $sql = $fnWithParam = self::replaceParams($rawSql, $vars);
 
-        return self::queryParams($connection, 'raw-sql', $sql, $vars);
+        return self::queryParams($connection, 'raw-sql', $sql, $vars, $isDebug);
     }
 
     /**
@@ -247,7 +287,7 @@ class PgFetch
     ): array {
         $connection = $this->dbManager->getConnection();
         $sql = self::makeFnTableSql($fn, $vars, $limit, $selectMod);
-        $result = self::queryParams($connection, $fn, $sql, $vars);
+        $result = self::queryParams($connection, $fn, $sql, $vars, $this->isDebug);
 
         return pg_fetch_all($result) ?: [];
     }
@@ -268,7 +308,7 @@ class PgFetch
     ): array {
         $connection = $this->dbManager->getConnection();
         $sql = self::makeFnTableSql($fn, $vars, 1, $selectMod);
-        $result = self::queryParams($connection, $fn, $sql, $vars);
+        $result = self::queryParams($connection, $fn, $sql, $vars, $this->isDebug);
 
         return pg_fetch_assoc($result) ?: [];
     }
@@ -285,7 +325,7 @@ class PgFetch
     {
         $connection = $this->dbManager->getConnection();
         $sql = self::makeFnScalarSql($fn, $vars);
-        $result = self::queryParams($connection, $fn, $sql, $vars);
+        $result = self::queryParams($connection, $fn, $sql, $vars, $this->isDebug);
 
         return pg_fetch_result($result, 0, 0);
     }
@@ -304,8 +344,8 @@ class PgFetch
         $connection = $this->dbManager->getConnection();
 
         return empty($vars) ?
-            self::simpleCursorFetch($connection, $fn) :
-            self::partyCursorFetch($connection, $fn, $vars, $cursors);
+            self::simpleCursorFetch($connection, $fn, $this->isDebug) :
+            self::partyCursorFetch($connection, $fn, $vars, $cursors, $this->isDebug);
     }
 
     /**
@@ -320,7 +360,7 @@ class PgFetch
     {
         $connection = $this->dbManager->getConnection();
 
-        $result = self::prepareRawSql($connection, $rawSql, $vars);
+        $result = self::prepareRawSql($connection, $rawSql, $vars, $this->isDebug);
 
         return pg_fetch_all($result) ?: [];
     }
@@ -337,7 +377,7 @@ class PgFetch
     {
         $connection = $this->dbManager->getConnection();
 
-        $result = self::prepareRawSql($connection, $rawSql, $vars);
+        $result = self::prepareRawSql($connection, $rawSql, $vars, $this->isDebug);
 
         return pg_fetch_assoc($result) ?: [];
     }
@@ -352,7 +392,7 @@ class PgFetch
     {
         $connection = $this->dbManager->getConnection();
 
-        self::queryParams($connection, $fn, 'SELECT ' . $fn, $vars);
+        self::queryParams($connection, $fn, 'SELECT ' . $fn, $vars, $this->isDebug);
     }
 
     /**

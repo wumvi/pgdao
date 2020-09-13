@@ -5,8 +5,12 @@ namespace Wumvi\PgDao;
 
 class DbManager
 {
-    private string $url;
+    /**
+     * @var array<mixed>
+     */
+    public static array $vars = [];
 
+    private string $url;
     private bool $isPersistent;
 
     /** @var resource|bool */
@@ -47,9 +51,14 @@ class DbManager
             return $this->connection;
         }
 
-        $this->connection = $this->isPersistent ? @pg_pconnect($this->url) : @pg_connect($this->url);
+        $url = $this->url;
+        foreach (self::$vars as $var => $value) {
+            $url = str_replace('{' . $var . '}', $value, $url);
+        }
+
+        $this->connection = $this->isPersistent ? @pg_pconnect($url) : @pg_connect($url);
         if ($this->connection === false) {
-            throw new DbException('error-to-fetch');
+            throw new DbException('error-db-connect');
         }
 
         return $this->connection;
