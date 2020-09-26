@@ -391,8 +391,8 @@ class PgFetch
     public function call(string $fn, array $vars = []): void
     {
         $connection = $this->dbManager->getConnection();
-
-        self::queryParams($connection, $fn, 'SELECT ' . $fn, $vars, $this->isDebug);
+        $fnWithParam = self::replaceParams($fn, $vars);
+        self::queryParams($connection, $fn, 'SELECT ' . $fnWithParam, $vars, $this->isDebug);
     }
 
     /**
